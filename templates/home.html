@@ -3,9 +3,11 @@
 {% block title %}FMS - Home{% endblock %}
 
 {% block content %}
-
-<p>Home:  Add some brief text and an image here </p>
-
-
-
+    <h2>Welcome to the Farm Management Simulator!</h2>
+    <img src="{{ url_for('static', filename='images/mobs.jpg') }}" alt="Farm Image" class="img-fluid mb-4">
+    <p>Here's some additional information about our farm:</p>
+    <ul>
+        <li>We have <strong>{{ num_of_animals }}</strong> animals on the farm.</li>
+        <li>The average weight of our animals is <strong>{{ avg_weight }} kg</strong>.</li>
+    </ul>
 {% endblock %}
