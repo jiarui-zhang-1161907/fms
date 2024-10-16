@@ -9,31 +9,42 @@ from datetime import date, datetime, timedelta
 import mysql.connector
 import connect
 
+
 ####### Required for the reset function to work both locally and in PythonAnywhere
 from pathlib import Path
 
 app = Flask(__name__)
 app.secret_key = 'COMP636 S2'
 
-start_date = datetime(2024,10,29)
-pasture_growth_rate = 65    #kg DM/ha/day
-stock_consumption_rate = 14 #kg DM/animal/day
+start_date = datetime(2024, 10, 29)
+pasture_growth_rate = 65    # kg DM/ha/day
+stock_consumption_rate = 14 # kg DM/animal/day
 
-def getCursor():
-    """Gets a new dictionary cursor for the database."""
+db_connection = None
+
+def initialize_db():
+    """Initialize the database connection."""
     global db_connection
-    
-    if db_connection is None or not db_connection.is_connected():
+    if db_connection is None:
         db_connection = mysql.connector.connect(
             user=connect.dbuser,
             password=connect.dbpass,
             host=connect.dbhost,
+            port=3306,
             database=connect.dbname,
             autocommit=True
         )
-        
+
+def getCursor():
+    """Gets a new dictionary cursor for the database."""
+    global db_connection
+    if not db_connection.is_connected():
+        initialize_db()
     cursor = db_connection.cursor(dictionary=True)
     return cursor
+
+# 初始化数据库连接
+initialize_db()
 
 def get_date():
     """Reads the date from the database table."""
@@ -176,6 +187,13 @@ def advance_date():
     
     flash('Date advanced to the next day.', 'info')
     return redirect(url_for('paddocks'))
+
+@app.route('/test_db')
+def test_db():
+    cursor = getCursor()
+    cursor.execute("SELECT VERSION()")
+    result = cursor.fetchone()
+    return f"Database Version: {result['VERSION()']}"
 
 if __name__ == '__main__':
     app.run(debug=True)
