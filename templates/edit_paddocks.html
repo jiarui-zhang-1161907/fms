@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}FMS - Edit Paddocks{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h2>Edit Paddocks</h2>
+        {% for paddock in paddocks %}
+            <form action="{{ url_for('update_paddock', paddock_id=paddock.id) }}" method="POST" class="mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ paddock.name }}</h5>
+                        <div class="mb-3">
+                            <label for="area_{{ paddock.id }}" class="form-label">Area (Ha)</label>
+                            <input type="number" step="any" name="area" class="form-control" id="area_{{ paddock.id }}" value="{{ paddock.area }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dm_per_ha_{{ paddock.id }}" class="form-label">DM/ha</label>
+                            <input type="number" step="any" name="dm_per_ha" class="form-control" id="dm_per_ha_{{ paddock.id }}" value="{{ paddock.dm_per_ha }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update {{ paddock.name }}</button>
+                    </div>
+                </div>
+            </form>
+        {% endfor %}
+        <form action="{{ url_for('add_paddock') }}" method="POST" class="mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Add New Paddock</h5>
+                    <div class="mb-3">
+                        <label for="new_paddock_name" class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" id="new_paddock_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_area" class="form-label">Area (Ha)</label>
+                        <input type="number" step="any" name="area" class="form-control" id="new_area" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_dm_per_ha" class="form-label">DM/ha</label>
+                        <input type="number" step="any" name="dm_per_ha" class="form-control" id="new_dm_per_ha" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Add New Paddock</button>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}
