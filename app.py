@@ -164,7 +164,7 @@ def edit_paddocks():
                     new_area = request.form[paddock]
                     cursor = getCursor()
                     cursor.execute("UPDATE paddocks SET area = %s WHERE id = %s", (new_area, paddock_id))
-                    
+            
             new_paddock_name = request.form.get('new_paddock_name')
             new_area = request.form.get('new_area')
             new_dm_per_ha = request.form.get('new_dm_per_ha')
@@ -178,7 +178,7 @@ def edit_paddocks():
         return redirect(url_for('paddocks'))
     else:
         cursor = getCursor()
-        cursor.execute("SELECT * FROM paddocks")
+        cursor.execute("SELECT * FROM paddocks ORDER BY name")
         paddocks = cursor.fetchall()
         return render_template('edit_paddocks.html', paddocks=paddocks)
 
@@ -229,6 +229,17 @@ def edit_animal(animal_id):
             flash('Animal not found.', 'error')
             return redirect(url_for('stock'))
         return render_template('edit_animal.html', animal=animal)
+
+
+@app.route('/update_paddock/<int:paddock_id>', methods=['POST'])
+def update_paddock(paddock_id):
+    new_area = request.form.get('new_area')
+    new_dm_per_ha = request.form.get('new_dm_per_ha')
+    
+    cursor = getCursor()
+    cursor.execute("UPDATE paddocks SET area = %s, dm_per_ha = %s WHERE id = %s", (new_area, new_dm_per_ha, paddock_id))
+    flash('Paddock updated successfully.', 'success')
+    return redirect(url_for('edit_paddocks'))
 
 
 if __name__ == '__main__':
