@@ -198,9 +198,9 @@ def test_db():
 @app.route('/edit_animal/<int:animal_id>', methods=['GET', 'POST'])
 def edit_animal(animal_id):
     if request.method == 'POST':
+        # 更新动物信息的逻辑
         weight = request.form.get('weight')
         dob = request.form.get('dob')
-        
         cursor = getCursor()
         cursor.execute("UPDATE stock SET weight = %s, dob = %s WHERE id = %s", (weight, dob, animal_id))
         flash('Animal updated successfully.', 'success')
@@ -214,10 +214,10 @@ def edit_animal(animal_id):
 @app.route('/edit_paddock/<int:paddock_id>', methods=['GET', 'POST'])
 def edit_paddock(paddock_id):
     if request.method == 'POST':
+        # 更新围栏信息的逻辑
         name = request.form.get('name')
         area = request.form.get('area')
         dm_per_ha = request.form.get('dm_per_ha')
-        
         cursor = getCursor()
         cursor.execute("UPDATE paddocks SET name = %s, area = %s, dm_per_ha = %s WHERE id = %s", (name, area, dm_per_ha, paddock_id))
         flash('Paddock updated successfully.', 'success')
