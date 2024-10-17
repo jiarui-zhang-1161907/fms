@@ -1,18 +1,10 @@
-from flask import Flask
-from flask import render_template
-from flask import request
-from flask import redirect
-from flask import url_for
-from flask import session
-from flask import flash
-from datetime import date, datetime, timedelta
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from datetime import datetime, timedelta
 import mysql.connector
 import connect
-
-
-####### Required for the reset function to work both locally and in PythonAnywhere
 from pathlib import Path
 
+# 创建 Flask 应用
 app = Flask(__name__)
 app.secret_key = 'COMP636 S2'
 
@@ -210,23 +202,6 @@ def edit_animal(animal_id):
         cursor.execute("SELECT * FROM stock WHERE id = %s", (animal_id,))
         animal = cursor.fetchone()
         return render_template('edit_animal.html', animal=animal)
-
-@app.route('/edit_paddocks/<int:paddock_id>', methods=['GET', 'POST'])
-def edit_paddocks(paddock_id):
-    if request.method == 'POST':
-        # 更新围栏信息的逻辑
-        name = request.form.get('name')
-        area = request.form.get('area')
-        dm_per_ha = request.form.get('dm_per_ha')
-        cursor = getCursor()
-        cursor.execute("UPDATE paddocks SET name = %s, area = %s, dm_per_ha = %s WHERE id = %s", (name, area, dm_per_ha, paddock_id))
-        flash('Paddock updated successfully.', 'success')
-        return redirect(url_for('paddocks'))
-    else:
-        cursor = getCursor()
-        cursor.execute("SELECT * FROM paddocks WHERE id = %s", (paddock_id,))
-        paddock = cursor.fetchone()
-        return render_template('edit_paddocks.html', paddock=paddock)
 
 if __name__ == '__main__':
     app.run(debug=True)
