@@ -211,8 +211,8 @@ def edit_animal(animal_id):
         animal = cursor.fetchone()
         return render_template('edit_animal.html', animal=animal)
 
-@app.route('/edit_paddock/<int:paddock_id>', methods=['GET', 'POST'])
-def edit_paddock(paddock_id):
+@app.route('/edit_paddocks/<int:paddock_id>', methods=['GET', 'POST'])
+def edit_paddocks(paddock_id):
     if request.method == 'POST':
         # 更新围栏信息的逻辑
         name = request.form.get('name')
@@ -226,7 +226,7 @@ def edit_paddock(paddock_id):
         cursor = getCursor()
         cursor.execute("SELECT * FROM paddocks WHERE id = %s", (paddock_id,))
         paddock = cursor.fetchone()
-        return render_template('edit_paddock.html', paddock=paddock)
+        return render_template('edit_paddocks.html', paddock=paddock)
 
 if __name__ == '__main__':
     app.run(debug=True)
