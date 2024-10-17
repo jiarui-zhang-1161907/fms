@@ -14,6 +14,7 @@ stock_consumption_rate = 14 # kg DM/animal/day
 
 db_connection = None
 
+
 def initialize_db():
     """Initialize the database connection."""
     global db_connection
@@ -27,6 +28,7 @@ def initialize_db():
             autocommit=True
         )
 
+
 def getCursor():
     """Gets a new dictionary cursor for the database."""
     global db_connection
@@ -38,6 +40,7 @@ def getCursor():
 # 初始化数据库连接
 initialize_db()
 
+
 def get_date():
     """Reads the date from the database table."""
     cursor = getCursor()
@@ -45,15 +48,18 @@ def get_date():
     result = cursor.fetchone()
     return result['curr_date'].isoformat() if result else None
 
+
 def update_pasture(cursor, paddock_id, area, dm_per_ha):
     """Updates pasture values for a given paddock."""
     total_dm = area * dm_per_ha
     cursor.execute("UPDATE paddocks SET total_dm = %s, dm_per_ha = %s WHERE id = %s", (total_dm, dm_per_ha, paddock_id))
 
+
 @app.route('/')
 def home():
     session['curr_date'] = get_date()
     return render_template('home.html')
+
 
 @app.route("/reset")
 def reset():
@@ -67,6 +73,7 @@ def reset():
                 cursor.execute(qstr)
     session['curr_date'] = get_date()
     return redirect(url_for('paddocks'))
+
 
 @app.route('/mobs')
 def mobs():
@@ -82,6 +89,7 @@ def mobs():
     mobs = cursor.fetchall()
     return render_template('mobs.html', mobs=mobs)
 
+
 @app.route('/paddocks')
 def paddocks():
     session['curr_date'] = get_date()
@@ -90,20 +98,32 @@ def paddocks():
     paddocks = cursor.fetchall()
     return render_template('paddocks.html', paddocks=paddocks)
 
+
 @app.route('/stock')
 def stock():
     session['curr_date'] = get_date()
     cursor = getCursor()
+    
+    # 获取每个群体的基本信息
     cursor.execute("""
-        SELECT m.name, p.name AS paddock, COUNT(s.id) AS num_stock, AVG(s.weight) AS avg_weight, 
-               GROUP_CONCAT(CONCAT(s.id, ': ', TIMESTAMPDIFF(YEAR, s.dob, CURDATE()))) AS animals
-        FROM mobs m
-        JOIN paddocks p ON m.paddock_id = p.id
-        LEFT JOIN stock s ON m.id = s.mob_id
-        GROUP BY m.name, p.name
+        SELECT m.id, m.name, p.name AS paddock, COUNT(s.id) AS num_stock, AVG(s.weight) AS avg_weight 
+        FROM mobs m 
+        JOIN paddocks p ON m.paddock_id = p.id 
+        LEFT JOIN stock s ON m.id = s.mob_id 
+        GROUP BY m.id, m.name, p.name
     """)
-    mobs = cursor.fetchall()
-    return render_template('stock.html', mobs=mobs)
+    mobs_info = cursor.fetchall()
+    
+    # 获取每个群体中的所有动物信息
+    for mob in mobs_info:
+        cursor.execute("SELECT id, type, gender, dob FROM stock WHERE mob_id = %s", (mob['id'],))
+        mob['animals'] = cursor.fetchall()
+        for animal in mob['animals']:
+            # 计算年龄
+            animal['age'] = (datetime.now().date() - animal['dob']).days // 365
+    
+    return render_template('stock.html', mobs=mobs_info)
+
 
 @app.route('/move_mob', methods=['GET', 'POST'])
 def move_mob():
@@ -133,6 +153,7 @@ def move_mob():
         paddocks = cursor.fetchall()
         return render_template('move_mobs.html', mobs=mobs, paddocks=paddocks)
 
+
 @app.route('/edit_paddocks', methods=['GET', 'POST'])
 def edit_paddocks():
     if request.method == 'POST':
@@ -161,6 +182,7 @@ def edit_paddocks():
         paddocks = cursor.fetchall()
         return render_template('edit_paddocks.html', paddocks=paddocks)
 
+
 @app.route('/advance_date', methods=['POST'])
 def advance_date():
     session['curr_date'] = (datetime.strptime(session['curr_date'], '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
@@ -180,12 +202,14 @@ def advance_date():
     flash('Date advanced to the next day.', 'info')
     return redirect(url_for('paddocks'))
 
+
 @app.route('/test_db')
 def test_db():
     cursor = getCursor()
     cursor.execute("SELECT VERSION()")
     result = cursor.fetchone()
     return f"Database Version: {result['VERSION()']}"
+
 
 @app.route('/edit_animal/<int:animal_id>', methods=['GET', 'POST'])
 def edit_animal(animal_id):
@@ -201,7 +225,11 @@ def edit_animal(animal_id):
         cursor = getCursor()
         cursor.execute("SELECT * FROM stock WHERE id = %s", (animal_id,))
         animal = cursor.fetchone()
+        if not animal:
+            flash('Animal not found.', 'error')
+            return redirect(url_for('stock'))
         return render_template('edit_animal.html', animal=animal)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
