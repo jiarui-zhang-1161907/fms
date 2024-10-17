@@ -1,6 +1,6 @@
 drop schema if exists fms;
 create schema fms;
-use fms;
+use jiaruizhang11619$fms;
 
 CREATE TABLE curr_date (
     curr_date DATE NOT NULL,
