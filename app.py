@@ -195,5 +195,38 @@ def test_db():
     result = cursor.fetchone()
     return f"Database Version: {result['VERSION()']}"
 
+@app.route('/edit_animal/<int:animal_id>', methods=['GET', 'POST'])
+def edit_animal(animal_id):
+    if request.method == 'POST':
+        weight = request.form.get('weight')
+        dob = request.form.get('dob')
+        
+        cursor = getCursor()
+        cursor.execute("UPDATE stock SET weight = %s, dob = %s WHERE id = %s", (weight, dob, animal_id))
+        flash('Animal updated successfully.', 'success')
+        return redirect(url_for('stock'))
+    else:
+        cursor = getCursor()
+        cursor.execute("SELECT * FROM stock WHERE id = %s", (animal_id,))
+        animal = cursor.fetchone()
+        return render_template('edit_animal.html', animal=animal)
+
+@app.route('/edit_paddock/<int:paddock_id>', methods=['GET', 'POST'])
+def edit_paddock(paddock_id):
+    if request.method == 'POST':
+        name = request.form.get('name')
+        area = request.form.get('area')
+        dm_per_ha = request.form.get('dm_per_ha')
+        
+        cursor = getCursor()
+        cursor.execute("UPDATE paddocks SET name = %s, area = %s, dm_per_ha = %s WHERE id = %s", (name, area, dm_per_ha, paddock_id))
+        flash('Paddock updated successfully.', 'success')
+        return redirect(url_for('paddocks'))
+    else:
+        cursor = getCursor()
+        cursor.execute("SELECT * FROM paddocks WHERE id = %s", (paddock_id,))
+        paddock = cursor.fetchone()
+        return render_template('edit_paddock.html', paddock=paddock)
+
 if __name__ == '__main__':
     app.run(debug=True)
