@@ -32,7 +32,7 @@ def initialize_db():
 def getCursor():
     """Gets a new dictionary cursor for the database."""
     global db_connection
-    if not db_connection.is_connected():
+    if db_connection is None or not db_connection.is_connected():
         initialize_db()
     cursor = db_connection.cursor(dictionary=True)
     return cursor
@@ -257,6 +257,9 @@ def update_paddock(paddock_id):
 @app.before_request
 def before_request():
     session.setdefault('curr_date', get_date())
+    global db_connection
+    if db_connection is not None and not db_connection.is_connected():
+        initialize_db()
 
 
 @app.teardown_request
