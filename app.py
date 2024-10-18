@@ -215,10 +215,7 @@ def test_db():
 
 @app.route('/edit_animal/<int:animal_id>')
 def edit_animal(animal_id):
-    cursor, connection = getCursor()
-    if cursor is None:
-        return "Database connection error"
-
+    cursor = getCursor()
     cursor.execute("SELECT * FROM stock WHERE id = %s", (animal_id,))
     animal = cursor.fetchone()
 
@@ -227,20 +224,15 @@ def edit_animal(animal_id):
 
     return render_template('edit_animal.html', animal=animal)
 
-
+# 更新动物信息的路由
 @app.route('/update_animal/<int:animal_id>', methods=['POST'])
 def update_animal(animal_id):
-    cursor, connection = getCursor()
-    if cursor is None:
-        return "Database connection error"
-
+    cursor = getCursor()
     data = request.form
     cursor.execute(
         "UPDATE stock SET dob = %s, weight = %s WHERE id = %s",
         (data['dob'], data['weight'], animal_id)
     )
-    connection.commit()
-
     return redirect(url_for('stock'))
 
 
