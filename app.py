@@ -37,6 +37,7 @@ def getCursor():
     cursor = db_connection.cursor(dictionary=True)
     return cursor
 
+
 # 初始化数据库连接
 initialize_db()
 
@@ -116,11 +117,12 @@ def stock():
     
     # 获取每个群体中的所有动物信息
     for mob in mobs_info:
-        cursor.execute("SELECT id, type, gender, dob FROM stock WHERE mob_id = %s", (mob['id'],))
+        cursor.execute("SELECT id, gender, dob, weight FROM stock WHERE mob_id = %s", (mob['id'],))
         mob['animals'] = cursor.fetchall()
         for animal in mob['animals']:
-            # 计算年龄
-            animal['age'] = (datetime.now().date() - animal['dob']).days // 365
+            # 使用 session['curr_date'] 计算年龄
+            curr_date = datetime.strptime(session['curr_date'], '%Y-%m-%d').date()
+            animal['age'] = (curr_date - animal['dob']).days // 365
     
     return render_template('stock.html', mobs=mobs_info)
 
@@ -141,7 +143,7 @@ def move_mob():
         
         try:
             cursor.execute("UPDATE mobs SET paddock_id = %s WHERE id = %s", (new_paddock_id, mob_id))
-        except Exception as e:
+        except mysql.connector.Error as e:
             flash(f'An error occurred while moving the mob: {e}', 'error')
             return redirect(url_for('paddocks'))
         return redirect(url_for('paddocks'))
@@ -196,7 +198,7 @@ def advance_date():
         consumption = paddock['num_stock'] * stock_consumption_rate if paddock['num_stock'] else 0
         cursor.execute("SELECT dm_per_ha FROM paddocks WHERE id = %s", (paddock['id'], ))
         dm_per_ha = cursor.fetchone()['dm_per_ha']
-        new_dm_per_ha = dm_per_ha + growth - consumption
+        new_dm_per_ha = max(dm_per_ha + growth - consumption, 0)
         update_pasture(cursor, paddock['id'], paddock['area'], new_dm_per_ha)
     
     flash('Date advanced to the next day.', 'info')
@@ -235,7 +237,14 @@ def edit_animal(animal_id):
 def update_paddock(paddock_id):
     new_area = request.form.get('new_area')
     new_dm_per_ha = request.form.get('new_dm_per_ha')
-    
+
+    try:
+        new_area = float(new_area)
+        new_dm_per_ha = float(new_dm_per_ha)
+    except ValueError:
+        flash('Area and DM/ha must be numbers.', 'error')
+        return redirect(url_for('edit_paddocks'))
+
     cursor = getCursor()
     cursor.execute("UPDATE paddocks SET area = %s, dm_per_ha = %s WHERE id = %s", (new_area, new_dm_per_ha, paddock_id))
     flash('Paddock updated successfully.', 'success')
