@@ -117,7 +117,7 @@ def stock():
     
     # 获取每个群体中的所有动物信息
     for mob in mobs_info:
-        cursor.execute("SELECT id, gender, dob, weight FROM stock WHERE mob_id = %s", (mob['id'],))
+        cursor.execute("SELECT id, dob, weight FROM stock WHERE mob_id = %s", (mob['id'],))
         mob['animals'] = cursor.fetchall()
         for animal in mob['animals']:
             # 使用 session['curr_date'] 计算年龄
