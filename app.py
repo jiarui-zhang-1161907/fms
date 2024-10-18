@@ -213,24 +213,35 @@ def test_db():
     return f"Database Version: {result['VERSION()']}"
 
 
-@app.route('/edit_animal/<int:animal_id>', methods=['GET', 'POST'])
+@app.route('/edit_animal/<int:animal_id>')
 def edit_animal(animal_id):
-    if request.method == 'POST':
-        # 更新动物信息的逻辑
-        weight = request.form.get('weight')
-        dob = request.form.get('dob')
-        cursor = getCursor()
-        cursor.execute("UPDATE stock SET weight = %s, dob = %s WHERE id = %s", (weight, dob, animal_id))
-        flash('Animal updated successfully.', 'success')
-        return redirect(url_for('stock'))
-    else:
-        cursor = getCursor()
-        cursor.execute("SELECT * FROM stock WHERE id = %s", (animal_id,))
-        animal = cursor.fetchone()
-        if not animal:
-            flash('Animal not found.', 'error')
-            return redirect(url_for('stock'))
-        return render_template('edit_animal.html', animal=animal)
+    cursor, connection = getCursor()
+    if cursor is None:
+        return "Database connection error"
+
+    cursor.execute("SELECT * FROM stock WHERE id = %s", (animal_id,))
+    animal = cursor.fetchone()
+
+    if animal is None:
+        return "Animal not found"
+
+    return render_template('edit_animal.html', animal=animal)
+
+
+@app.route('/update_animal/<int:animal_id>', methods=['POST'])
+def update_animal(animal_id):
+    cursor, connection = getCursor()
+    if cursor is None:
+        return "Database connection error"
+
+    data = request.form
+    cursor.execute(
+        "UPDATE stock SET dob = %s, weight = %s WHERE id = %s",
+        (data['dob'], data['weight'], animal_id)
+    )
+    connection.commit()
+
+    return redirect(url_for('stock'))
 
 
 @app.route('/update_paddock/<int:paddock_id>', methods=['POST'])
@@ -249,6 +260,19 @@ def update_paddock(paddock_id):
     cursor.execute("UPDATE paddocks SET area = %s, dm_per_ha = %s WHERE id = %s", (new_area, new_dm_per_ha, paddock_id))
     flash('Paddock updated successfully.', 'success')
     return redirect(url_for('edit_paddocks'))
+
+
+@app.before_request
+def before_request():
+    session.setdefault('curr_date', get_date())
+
+
+@app.teardown_request
+def teardown_request(exception=None):
+    global db_connection
+    if db_connection is not None and db_connection.is_connected():
+        db_connection.close()
+        db_connection = None
 
 
 if __name__ == '__main__':
