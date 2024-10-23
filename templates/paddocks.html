@@ -4,7 +4,9 @@
 
 {% block content %}
     <div class="container mt-4">
-        <button type="button" class="btn btn-secondary mb-3" onclick="location.href='{{ url_for('advance_date') }}'">Advance Date</button>
+        <form action="{{ url_for('advance_date') }}" method="post">
+            <button type="submit" class="btn btn-secondary mb-3">Advance Date</button>
+        </form>
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -19,7 +21,7 @@
             </thead>
             <tbody>
                 {% for paddock in paddocks %}
-                    <tr class=" {% if paddock.total_dm < 1500 %}bg-danger
+                    <tr class="{% if paddock.total_dm < 1500 %}bg-danger
                                 {% elif paddock.total_dm < 1800 %}bg-warning
                                 {% else %}bg-white{% endif %}">
                         <td>{{ paddock.name }}</td>
