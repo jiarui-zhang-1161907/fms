@@ -4,22 +4,24 @@
 
 {% block content %}
     <div class="container mt-4">
-        <h2>Welcome to the Te Waihora Farm Management Simulator (FMS)!</h2>
+        <div class="text-center">
+            <h2 class="fw-bold">Welcome to the Te Waihora Farm Management Simulator (FMS)!</h2>
+        </div>
         <img src="{{ url_for('static', filename='images/mobs.jpg') }}" alt="Farm Image" class="img-fluid mb-4">
-        <p>Te Waihora FMS is a system designed to model stock management on a farm. The primary goal is to help farmers simulate the optimal number of livestock (such as cows) that their farm can sustain based on the available pasture (grass).</p>
-        <p>This tool provides valuable insights into:</p>
-        <ul>
-            <li>The current number of animals on the farm.</li>
-            <li>The average weight of the livestock.</li>
+        <p class="lead">Te Waihora FMS is a system designed to model stock management on a farm. The primary goal is to help farmers simulate the optimal number of livestock (such as cows) that their farm can sustain based on the available pasture (grass).</p>
+        <p class="lead">This tool provides valuable insights into:</p>
+        <ul class="list-unstyled">
+            <li>The current number of animals on the farm: <strong>{{ num_of_animals }}</strong></li>
+            <li>The average weight of the livestock: <strong>{{ avg_weight }} kg</strong></li>
             <li>How much pasture is available for consumption</li>
             <li>Strategies for managing stock movements and feeding schedules</li>
         </ul>
-        <p>By using this simulator, farmers can make informed decisions regarding:</p>
-        <ul>
+        <p class="lead">By using this simulator, farmers can make informed decisions regarding:</p>
+        <ul class="list-unstyled">
             <li>Stock density and distribution across different paddocks</li>
             <li>Optimal times for moving stock to new pastures</li>
             <li>Supplemental feeding requirements during periods of low pasture growth</li>
         </ul>
-        <p>Our system aims to balance the needs of the livestock with the sustainable use of pasture resources, ensuring both the health of the animals and the productivity of the farm.</p>
+        <p class="lead">Our system aims to balance the needs of the livestock with the sustainable use of pasture resources, ensuring both the health of the animals and the productivity of the farm.</p>
     </div>
 {% endblock %}
