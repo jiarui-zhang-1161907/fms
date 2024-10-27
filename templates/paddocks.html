@@ -4,25 +4,26 @@
 
 {% block content %}
     <div class="container mt-4">
+        <h1>Paddocks List</h1>
         <form action="{{ url_for('advance_date') }}" method="post">
             <button type="submit" class="btn btn-secondary mb-3">Advance Date</button>
         </form>
-        <table class="table table-striped">
+        <table class="table table-striped table-bordered">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Mob</th>
-                    <th># Stock</th>
-                    <th>Area (Ha)</th>
-                    <th>DM/ha</th>
-                    <th>Total DM</th>
-                    <th>Action</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Mob</th>
+                    <th scope="col"># Stock</th>
+                    <th scope="col">Area (Ha)</th>
+                    <th scope="col">DM/ha</th>
+                    <th scope="col">Total DM</th>
+                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for paddock in paddocks %}
-                    <tr class="{% if paddock.total_dm < 1500 %}bg-danger
-                                {% elif paddock.total_dm < 1800 %}bg-warning
+                    <tr class="text-center {% if paddock.total_dm < 1500 %}bg-danger text-white
+                                {% elif paddock.total_dm < 1800 %}bg-warning text-dark
                                 {% else %}bg-white{% endif %}">
                         <td>{{ paddock.name }}</td>
                         <td>{{ paddock.mob_name if paddock.mob_name else '-' }}</td>

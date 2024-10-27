@@ -4,7 +4,7 @@
 
 {% block content %}
     <div class="container mt-4">
-        <h2>Mobs List</h2>
+        <h2 class="mb-3">Mobs List</h2>
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
@@ -18,9 +18,9 @@
                 {% for mob in mobs %}
                     <tr>
                         <td>{{ mob.name }}</td>
-                        <td>{{ mob.paddock }}</td>
-                        <td>{{ mob.num_stock }}</td>
-                        <td>{{ mob.avg_weight }}</td>
+                        <td>{{ mob.paddock if mob.paddock else '-' }}</td>
+                        <td>{{ mob.num_stock if mob.num_stock else '-' }}</td>
+                        <td>{{ mob.avg_weight if mob.avg_weight else '-' }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
