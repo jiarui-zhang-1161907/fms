@@ -4,8 +4,12 @@
 
 {% block content %}
     <div class="container mt-4">
+        <!-- Page heading -->
         <h2>Move Mob</h2>
+        
+        <!-- Form to move a mob to a new paddock -->
         <form action="{{ url_for('move_mob') }}" method="POST">
+            <!-- Dropdown to select the mob to be moved -->
             <div class="mb-3">
                 <label for="mob_id" class="form-label">Mob Name:</label>
                 <select class="form-select" id="mob_id" name="mob_id" required>
@@ -14,6 +18,8 @@
                     {% endfor %}
                 </select>
             </div>
+            
+            <!-- Dropdown to select the new paddock for the mob -->
             <div class="mb-3">
                 <label for="new_paddock_id" class="form-label">New Paddock:</label>
                 <select class="form-select" id="new_paddock_id" name="new_paddock_id" required>
@@ -22,6 +28,8 @@
                     {% endfor %}
                 </select>
             </div>
+            
+            <!-- Submit button to move the mob -->
             <button type="submit" class="btn btn-primary">Move</button>
         </form>
     </div>

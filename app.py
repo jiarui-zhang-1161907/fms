@@ -4,7 +4,6 @@ import mysql.connector
 import connect
 from pathlib import Path
 
-# 创建 Flask 应用
 app = Flask(__name__)
 app.secret_key = 'COMP636 S2'
 
@@ -38,7 +37,7 @@ def getCursor():
     return cursor
 
 
-# 初始化数据库连接
+# Initialize database connection
 initialize_db()
 
 
@@ -58,9 +57,9 @@ def update_pasture(cursor, paddock_id, area, dm_per_ha):
 
 @app.route('/')
 def home():
+    # Set the current date to the session
     session['curr_date'] = get_date()
     return render_template('home.html')
-
 
 @app.route("/reset")
 def reset():
@@ -72,12 +71,13 @@ def reset():
             if qstr.strip():
                 cursor = getCursor()
                 cursor.execute(qstr)
+    # Update the current date after reset
     session['curr_date'] = get_date()
     return redirect(url_for('paddocks'))
 
-
 @app.route('/mobs')
 def mobs():
+    # Set the current date to the session
     session['curr_date'] = get_date()
     cursor = getCursor()
     cursor.execute("""
@@ -90,22 +90,22 @@ def mobs():
     mobs = cursor.fetchall()
     return render_template('mobs.html', mobs=mobs)
 
-
 @app.route('/paddocks')
 def paddocks():
+    # Set the current date to the session
     session['curr_date'] = get_date()
     cursor = getCursor()
     cursor.execute("SELECT * FROM paddocks")
     paddocks = cursor.fetchall()
     return render_template('paddocks.html', paddocks=paddocks)
 
-
 @app.route('/stock')
 def stock():
+    # Set the current date to the session
     session['curr_date'] = get_date()
     cursor = getCursor()
     
-    # 获取每个群体的基本信息
+    # Get basic information about each mob
     cursor.execute("""
         SELECT m.id, m.name, p.name AS paddock, COUNT(s.id) AS num_stock, AVG(s.weight) AS avg_weight 
         FROM mobs m 
@@ -115,21 +115,21 @@ def stock():
     """)
     mobs_info = cursor.fetchall()
     
-    # 获取每个群体中的所有动物信息
+    # Get all animals within each mob
     for mob in mobs_info:
         cursor.execute("SELECT id, dob, weight FROM stock WHERE mob_id = %s", (mob['id'],))
         mob['animals'] = cursor.fetchall()
         for animal in mob['animals']:
-            # 使用 session['curr_date'] 计算年龄
+            # Calculate age using session['curr_date']
             curr_date = datetime.strptime(session['curr_date'], '%Y-%m-%d').date()
             animal['age'] = (curr_date - animal['dob']).days // 365
     
     return render_template('stock.html', mobs=mobs_info)
 
-
 @app.route('/move_mob', methods=['GET', 'POST'])
 def move_mob():
     if request.method == 'POST':
+        # Process the move mob form submission
         mob_id = request.form.get('mob_id')
         new_paddock_id = request.form.get('new_paddock_id')
         
@@ -138,16 +138,19 @@ def move_mob():
         existing_mob = cursor.fetchone()
         
         if existing_mob:
+            # Flash an error if the paddock already contains a mob
             flash('The selected paddock already contains a mob.', 'error')
             return redirect(url_for('paddocks'))
         
         try:
             cursor.execute("UPDATE mobs SET paddock_id = %s WHERE id = %s", (new_paddock_id, mob_id))
         except mysql.connector.Error as e:
+            # Flash an error if there was a problem moving the mob
             flash(f'An error occurred while moving the mob: {e}', 'error')
             return redirect(url_for('paddocks'))
         return redirect(url_for('paddocks'))
     else:
+        # GET request to show the move mob form
         cursor = getCursor()
         cursor.execute("SELECT id, name FROM mobs")
         mobs = cursor.fetchall()
@@ -155,11 +158,11 @@ def move_mob():
         paddocks = cursor.fetchall()
         return render_template('move_mobs.html', mobs=mobs, paddocks=paddocks)
 
-
 @app.route('/edit_paddocks', methods=['GET', 'POST'])
 def edit_paddocks():
     if request.method == 'POST':
         try:
+            # Update areas of existing paddocks
             for paddock in request.form:
                 if paddock.startswith('area_'):
                     paddock_id = int(paddock.replace('area_', ''))
@@ -167,6 +170,7 @@ def edit_paddocks():
                     cursor = getCursor()
                     cursor.execute("UPDATE paddocks SET area = %s WHERE id = %s", (new_area, paddock_id))
             
+            # Insert a new paddock if all fields are filled
             new_paddock_name = request.form.get('new_paddock_name')
             new_area = request.form.get('new_area')
             new_dm_per_ha = request.form.get('new_dm_per_ha')
@@ -175,18 +179,20 @@ def edit_paddocks():
                 cursor.execute("INSERT INTO paddocks (name, area, dm_per_ha) VALUES (%s, %s, %s)", 
                                (new_paddock_name, new_area, new_dm_per_ha))
         except Exception as e:
+            # Flash an error if there was a problem updating paddocks
             flash(f'An error occurred while updating paddocks: {e}', 'error')
             return redirect(url_for('paddocks'))
         return redirect(url_for('paddocks'))
     else:
+        # GET request to show the edit paddocks form
         cursor = getCursor()
         cursor.execute("SELECT * FROM paddocks ORDER BY name")
         paddocks = cursor.fetchall()
         return render_template('edit_paddocks.html', paddocks=paddocks)
 
-
 @app.route('/advance_date', methods=['POST'])
 def advance_date():
+    # Advance the date by one day
     session['curr_date'] = (datetime.strptime(session['curr_date'], '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
     
     cursor = getCursor()
@@ -194,6 +200,7 @@ def advance_date():
     paddocks = cursor.fetchall()
     
     for paddock in paddocks:
+        # Calculate growth and consumption
         growth = paddock['area'] * pasture_growth_rate
         consumption = paddock['num_stock'] * stock_consumption_rate if paddock['num_stock'] else 0
         cursor.execute("SELECT dm_per_ha FROM paddocks WHERE id = %s", (paddock['id'], ))
@@ -201,20 +208,21 @@ def advance_date():
         new_dm_per_ha = max(dm_per_ha + growth - consumption, 0)
         update_pasture(cursor, paddock['id'], paddock['area'], new_dm_per_ha)
     
+    # Flash a message after advancing the date
     flash('Date advanced to the next day.', 'info')
     return redirect(url_for('paddocks'))
 
-
 @app.route('/test_db')
 def test_db():
+    # Test the database connection
     cursor = getCursor()
     cursor.execute("SELECT VERSION()")
     result = cursor.fetchone()
     return f"Database Version: {result['VERSION()']}"
 
-
 @app.route('/edit_animal/<int:animal_id>')
 def edit_animal(animal_id):
+    # Retrieve an animal's details for editing
     cursor = getCursor()
     cursor.execute("SELECT * FROM stock WHERE id = %s", (animal_id,))
     animal = cursor.fetchone()
@@ -224,7 +232,7 @@ def edit_animal(animal_id):
 
     return render_template('edit_animal.html', animal=animal)
 
-# 更新动物信息的路由
+# Route for updating animal information
 @app.route('/update_animal/<int:animal_id>', methods=['POST'])
 def update_animal(animal_id):
     cursor = getCursor()
@@ -235,9 +243,9 @@ def update_animal(animal_id):
     )
     return redirect(url_for('stock'))
 
-
 @app.route('/update_paddock/<int:paddock_id>', methods=['POST'])
 def update_paddock(paddock_id):
+    # Update paddock's area and DM/ha
     new_area = request.form.get('new_area')
     new_dm_per_ha = request.form.get('new_dm_per_ha')
 
@@ -245,22 +253,23 @@ def update_paddock(paddock_id):
         new_area = float(new_area)
         new_dm_per_ha = float(new_dm_per_ha)
     except ValueError:
+        # Flash an error if the input is invalid
         flash('Area and DM/ha must be numbers.', 'error')
         return redirect(url_for('edit_paddocks'))
 
     cursor = getCursor()
     cursor.execute("UPDATE paddocks SET area = %s, dm_per_ha = %s WHERE id = %s", (new_area, new_dm_per_ha, paddock_id))
+    # Flash a success message
     flash('Paddock updated successfully.', 'success')
     return redirect(url_for('edit_paddocks'))
 
-
 @app.before_request
 def before_request():
+    # Set the current date to the session if not set
     session.setdefault('curr_date', get_date())
     global db_connection
     if db_connection is not None and not db_connection.is_connected():
         initialize_db()
-
 
 @app.teardown_request
 def teardown_request(exception=None):
@@ -268,7 +277,6 @@ def teardown_request(exception=None):
     if db_connection is not None and db_connection.is_connected():
         db_connection.close()
         db_connection = None
-
 
 if __name__ == '__main__':
     app.run(debug=True)
