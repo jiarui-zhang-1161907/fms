@@ -1,4 +1,3 @@
-# Final Project Report - Farm Management System (FMS)
 
 ## Discussion
 
